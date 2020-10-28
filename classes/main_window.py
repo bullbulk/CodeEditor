@@ -5,6 +5,7 @@ from subprocess import Popen
 
 from PyQt5 import QtGui
 from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QApplication
 
 from classes.framelessWindow.fw import FramelessWindow
 from classes.code_editor import CodeEditor
@@ -12,13 +13,11 @@ from utils import utils
 
 
 class MainWindow(FramelessWindow):
-    def __init__(self, size, max_size, min_size, window_icon, close_icon, maximize_icon, restore_icon,
-                 minimize_icon):
-        super().__init__(size=size, max_size=max_size, min_size=min_size, window_icon=window_icon,
-                         close_icon=close_icon,
-                         maximize_icon=maximize_icon, restore_icon=restore_icon, minimize_icon=minimize_icon)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.kwargs = kwargs
 
-        self.arg_size = size
+        self.arg_size = kwargs['size']
 
         self.config = utils.get_config()
         self.restore_state()
@@ -56,10 +55,8 @@ class MainWindow(FramelessWindow):
         self.config['geometry'] = g.x(), g.y(), g.width(), g.height()
         self.config['maximized'] = self.isMaximized()
         json.dump(self.config, open('data/config.json', 'w'))
-        if 'code.py' in os.listdir('data'):
-            os.remove('data/code.py')
-        if 'stdin' in os.listdir('data'):
-            os.remove('data/stdin')
+
+        utils.clean_data()
 
     def close(self):
         self.save_config()
@@ -74,9 +71,24 @@ class MainWindow(FramelessWindow):
     def keyPressEvent(self, event: QtGui.QKeyEvent):
         if int(event.modifiers()) == int(Qt.ControlModifier + Qt.ShiftModifier):
             if event.key() == Qt.Key_F10:
-                with open('data/code.py', 'w', encoding='utf-8') as f:
-                    code = self.code_widget.code_field.toPlainText()
-                    f.write(code)
-                    stdin = open('data/stdin', 'w', encoding='utf-8')
-                    stdin.write('2342')
-                    proc = Popen([sys.executable, 'data/code.py'], stdin=stdin, stdout=sys.stdout)
+                self.run_script()
+
+    def run_script(self):
+        with open('data/code.py', 'w', encoding='utf-8') as f:
+            code = self.code_widget.code_field.toPlainText()
+            f.write(code)
+            with open('data/stdin', 'w', encoding='utf-8') as stdin:
+                stdin.write('')
+
+            self.generate_bat()
+            proc = Popen(['start', 'cmd', '/c', r'data\run.bat'], shell=True)
+
+    def generate_bat(self):
+        with open('data/run.bat', 'w') as f:
+            f.write('@echo off\n')
+            f.write(f'echo {sys.executable} /deaw/fe\n')
+            f.write('echo.\n')
+            f.write(f'{sys.executable} data/code.py\n')
+            f.write('echo.\n')
+            f.write('pause\n')
+            f.write('exit')

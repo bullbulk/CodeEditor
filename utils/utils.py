@@ -22,3 +22,9 @@ def get_config() -> dict:
     if type(c) != dict:
         raise TypeError('Invalid config file. The result of deserialization must be a dict. Delete the config.json.')
     return c
+
+
+def clean_data():
+    for i in os.listdir('data'):
+        if i != 'config.json':
+            os.remove('data/' + i)
