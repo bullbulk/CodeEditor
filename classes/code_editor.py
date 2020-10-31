@@ -1,6 +1,6 @@
 from PyQt5 import QtGui
-from PyQt5.QtGui import QFont, QKeyEvent, QKeySequence
-from PyQt5.QtWidgets import QWidget, QPlainTextEdit, QFrame, QUndoStack, QPushButton
+from PyQt5.QtGui import QFont, QKeyEvent, QKeySequence, QCursor, QTextCursor
+from PyQt5.QtWidgets import QWidget, QPlainTextEdit, QFrame, QUndoStack, QPushButton, QUndoCommand
 from PyQt5.QtCore import Qt
 
 PAIR_SYMBOLS = {'(': ')', "'": "'", '"': '"', '{': '}', '[': ']'}
@@ -12,9 +12,9 @@ class CodeField(QPlainTextEdit):
 
         self.setFrameStyle(QFrame.NoFrame)
         self.setFont(QFont('Consolas', pointSize=14))
-        stack = QUndoStack(self)
-        stack.setUndoLimit(100)
-        self.undo, self.redo = stack.undo, stack.redo
+        self.stack = QUndoStack(self)
+        self.stack.setUndoLimit(100)
+        self.undo, self.redo = self.stack.undo, self.stack.redo
 
         self.undo_ = False
         self.redo_ = False
@@ -40,12 +40,13 @@ class CodeEditor(QWidget):
         self.changed = False
         self.tabs = 0
 
+        self.cur = QTextCursor()
+
     def code_change(self):
         if self.changed:
             self.changed = False
             return
-        text = self.code_field.toPlainText()
-        text = list(text)
+        text = list(self.code_field.toPlainText())
 
         cursor = self.code_field.textCursor()
         cur_pos = cursor.position()
@@ -63,7 +64,7 @@ class CodeEditor(QWidget):
         diff = text[cur_pos - 1] if text else ''
         if diff == ':':
             self.tabs += 1
-            self.code = text
+            self.code = ''.join(text)
 
         try:
 
