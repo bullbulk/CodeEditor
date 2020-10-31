@@ -12,6 +12,7 @@ class CodeField(QPlainTextEdit):
 
         self.setFrameStyle(QFrame.NoFrame)
         self.setFont(QFont('Consolas', pointSize=14))
+        self.setStyleSheet(' border-width: 1px; border-color: #515151 ')
         self.stack = QUndoStack(self)
         self.stack.setUndoLimit(100)
         self.undo, self.redo = self.stack.undo, self.stack.redo

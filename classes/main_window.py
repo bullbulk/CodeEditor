@@ -1,11 +1,9 @@
 import json
-import os
 import sys
 from subprocess import Popen
 
 from PyQt5 import QtGui
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication
 
 from classes.framelessWindow.fw import FramelessWindow
 from classes.code_editor import CodeEditor

@@ -2,11 +2,12 @@ from typing import Tuple
 
 from PIL import Image
 from PyQt5.QtCore import QSize, Qt
-from PyQt5.QtGui import QPixmap, QIcon, QMouseEvent, QImage
-from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QLabel, QPushButton
+from PyQt5.QtGui import QPixmap, QIcon, QMouseEvent, QImage, QFont
+from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QLabel, QPushButton, QMenu, QAction
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 import screeninfo
+
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -18,6 +19,7 @@ class Ui_MainWindow(object):
         MainWindow.setStyleSheet("QMainWindow { background-color: #3c3f41 }\n"
                                  "QMenuBar  { background-color: #3c3f41 }\n"
                                  "QWidget { background-color: #3c3f41 }\n"
+                                 "QPushButton { background-color: #3c3f41 }\n"
                                  "QPlainTextEdit { background-color: #2b2b2b }")
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
@@ -46,6 +48,7 @@ class FramelessWindow(QMainWindow, Ui_MainWindow):
         :param close_icon: window close button filename
         """
 
+        self.minimized = False
         self.close_icon = close_icon
         self.maximize_icon = maximize_icon
         self.restore_icon = restore_icon
@@ -82,13 +85,13 @@ class FramelessWindow(QMainWindow, Ui_MainWindow):
         )
         self.window_icon.setPixmap(icon_pxmap)
         self.window_icon.setStyleSheet(f'margin-left: 8px')
-        self.window_icon.resize(self.icons_w, self.icons_h)
+        self.window_icon.resize(self.icons_h, self.icons_h)
         self.title_bar.addWidget(self.window_icon)
 
         self.setup_title_buttons()
 
         self.move_label = QLabel(self)
-        self.move_label.move(self.window_icon.size().width(), 0)
+        self.move_label.move(self.window_icon.width() + self.file_menu_b.width(), 0)
         self.move_label.setMinimumSize(
             self.width() - self.icons_w * 3 - self.window_icon.size().width(),
             self.window_icon.size().height())
@@ -137,19 +140,19 @@ class FramelessWindow(QMainWindow, Ui_MainWindow):
     def setup_title_buttons(self):
         self.close_button = QPushButton(self)
         self.close_button.setFixedSize(QSize(self.icons_w, self.window_icon.size().height()))
-        self.close_button.setStyleSheet('QPushButton {border-style: outset}'
+        self.close_button.setStyleSheet('QPushButton { border-style: outset }'
                                         'QPushButton::hover { background-color: red }')
         self.minimize_button = QPushButton(self)
         self.minimize_button.setFixedSize(QSize(self.icons_w, self.window_icon.size().height()))
-        self.minimize_button.setStyleSheet('QPushButton {border-style: outset}'
+        self.minimize_button.setStyleSheet('QPushButton { border-style: outset }'
                                            'QPushButton::hover { background-color: grey }')
         self.maximize_button = QPushButton(self)
         self.maximize_button.setFixedSize(QSize(self.icons_w, self.window_icon.size().height()))
-        self.maximize_button.setStyleSheet('QPushButton {border-style: outset}'
+        self.maximize_button.setStyleSheet('QPushButton { border-style: outset }'
                                            'QPushButton::hover { background-color: grey }')
         self.restore_button = QPushButton(self)
         self.restore_button.setFixedSize(QSize(self.icons_w, self.window_icon.size().height()))
-        self.restore_button.setStyleSheet('QPushButton {border-style: outset}'
+        self.restore_button.setStyleSheet('QPushButton { border-style: outset}'
                                           'QPushButton::hover { background-color: grey }')
 
         close_icon = QIcon(self.get_pixmap(self.close_icon))
@@ -173,10 +176,33 @@ class FramelessWindow(QMainWindow, Ui_MainWindow):
         self.minimize_button.setIconSize(self.minimize_button.size())
         self.minimize_button.clicked.connect(self.minimize)
 
+        self.setup_menu()
+
         self.title_bar.addWidget(self.close_button)
         self.title_bar.addWidget(self.maximize_button)
         self.title_bar.addWidget(self.minimize_button)
         self.title_bar.addWidget(self.minimize_button)
+
+    def setup_menu(self):
+        file_menu = QMenu(self)
+        file_menu.setStyleSheet('background-color: #3c3f41; color: #a9b7c6;')
+
+        self.file_menu_b = QPushButton(self)
+        self.file_menu_b.setMenu(file_menu)
+        self.file_menu_b.setText('File')
+        self.file_menu_b.setStyleSheet('background-color: #3c3f41;'
+                                       'border-style: outset;'
+                                       'border-width: 1px;'
+                                       'border-color: #515151;'
+                                       'color: #a9b7c6;')
+        self.file_menu_b.setFixedSize(self.icons_w, self.icons_h)
+        self.file_menu_b.move(self.window_icon.width() + 8, 0)
+        self.file_menu_b.setFont(QFont('Calibri', pointSize=11))
+
+        open_action = QAction(file_menu)
+        open_action.setText('Open')
+        file_menu.addAction(open_action)
+        self.title_bar.addWidget(self.file_menu_b)
 
     def resizeEvent(self, event):
         self.in_resize = True
@@ -184,8 +210,10 @@ class FramelessWindow(QMainWindow, Ui_MainWindow):
         self.maximize_button.move(self.size().width() - self.icons_w * 2, 0)
         self.restore_button.move(self.size().width() - self.icons_w * 2, 0)
         self.minimize_button.move(self.size().width() - self.icons_w * 3, 0)
-        self.move_label.setFixedSize(self.width() - self.icons_w * 3 - self.window_icon.size().width(),
-                                     self.window_icon.size().height())
+        self.move_label.setFixedSize(
+            self.width() - self.icons_w * 3 - self.window_icon.size().width() - self.file_menu_b.width(),
+            self.window_icon.size().height()
+        )
         super(FramelessWindow, self).resizeEvent(event)
 
     def mousePressEvent(self, event: QMouseEvent):
@@ -226,7 +254,7 @@ class FramelessWindow(QMainWindow, Ui_MainWindow):
     def mouse_on_title(self, event):
         x = event.pos().x()
         y = event.pos().y()
-        if x in range(self.move_label.size().width() + self.window_icon.size().width() + 1) and \
+        if x in range(self.move_label.size().width() + self.window_icon.size().width() + self.file_menu_b.width() + 1) and \
                 y in range(self.move_label.size().height() + 1):
             return True
 
@@ -238,16 +266,22 @@ class FramelessWindow(QMainWindow, Ui_MainWindow):
                 self.maximize()
 
     def maximize(self):
-        if self.maximize_button.isVisible():
-            self.maximize_button.setVisible(False)
-            self.restore_button.setVisible(True)
-            self.setWindowState(Qt.WindowMaximized)
+        self.maximize_button.setVisible(False)
+        self.restore_button.setVisible(True)
+        self.setWindowState(Qt.WindowMaximized)
 
     def minimize(self):
+        self.minimized = True
         self.setWindowState(Qt.WindowMinimized)
 
     def restore(self):
-        if self.restore_button.isVisible():
-            self.restore_button.setVisible(False)
-            self.maximize_button.setVisible(True)
-            self.setWindowState(Qt.WindowNoState)
+        self.restore_button.setVisible(False)
+        self.maximize_button.setVisible(True)
+        self.setWindowState(Qt.WindowNoState)
+
+    def changeEvent(self, a0: QtCore.QEvent) -> None:
+        if a0.type() == QtCore.QEvent.WindowStateChange:
+            if self.minimized and not self.isMinimized():
+                self.minimized = False
+                if self.restore_button.isVisible():
+                    self.maximize()
