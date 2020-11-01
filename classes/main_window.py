@@ -1,12 +1,11 @@
 import json
 import sys
-from subprocess import Popen
 
 from PyQt5 import QtGui
 from PyQt5.QtCore import Qt
 
-from classes.framelessWindow.fw import FramelessWindow
 from classes.code_editor import CodeEditor
+from classes.framelessWindow.fw import FramelessWindow
 from utils import utils
 
 
@@ -39,6 +38,9 @@ class MainWindow(FramelessWindow):
             'margin: 0px 0px 0px 0px'
         )
 
+        self.open_action.triggered.connect(self.code_widget.open_file)
+        self.new_action.triggered.connect(self.code_widget.new_file)
+
     def restore_state(self):
         maximized = self.config.get('maximized', True)
         last_geometry = self.config.get('geometry', (0, 0, *self.arg_size))
@@ -69,24 +71,4 @@ class MainWindow(FramelessWindow):
     def keyPressEvent(self, event: QtGui.QKeyEvent):
         if int(event.modifiers()) == int(Qt.ControlModifier + Qt.ShiftModifier):
             if event.key() == Qt.Key_F10:
-                self.run_script()
-
-    def run_script(self):
-        with open('data/code.py', 'w', encoding='utf-8') as f:
-            code = self.code_widget.code_field.toPlainText()
-            f.write(code)
-            with open('data/stdin', 'w', encoding='utf-8') as stdin:
-                stdin.write('')
-
-            self.generate_bat()
-            proc = Popen(['start', 'cmd', '/c', r'data\run.bat'], shell=True)
-
-    def generate_bat(self):
-        with open('data/run.bat', 'w') as f:
-            f.write('@echo off\n')
-            f.write(f'echo {sys.executable} /deaw/fe\n')
-            f.write('echo.\n')
-            f.write(f'{sys.executable} data/code.py\n')
-            f.write('echo.\n')
-            f.write('pause\n')
-            f.write('exit')
+                self.code_widget.run_script()

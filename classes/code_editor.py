@@ -1,9 +1,23 @@
+import sys
+from subprocess import Popen
+import threading
+
 from PyQt5 import QtGui
-from PyQt5.QtGui import QFont, QKeyEvent, QKeySequence, QCursor, QTextCursor
-from PyQt5.QtWidgets import QWidget, QPlainTextEdit, QFrame, QUndoStack, QPushButton, QUndoCommand
-from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QFont, QKeySequence, QTextCursor
+from PyQt5.QtWidgets import QWidget, QPlainTextEdit, QFrame, QUndoStack, QFileDialog, QDialog, QMessageBox
 
 PAIR_SYMBOLS = {'(': ')', "'": "'", '"': '"', '{': '}', '[': ']'}
+
+
+class Writer(threading.Thread):
+    def __init__(self, filename, text):
+        super().__init__()
+        self.filename = filename
+        self.text = text
+
+    def run(self):
+        with open(self.filename, 'w') as f:
+            f.write(self.text)
 
 
 class CodeField(QPlainTextEdit):
@@ -12,13 +26,14 @@ class CodeField(QPlainTextEdit):
 
         self.setFrameStyle(QFrame.NoFrame)
         self.setFont(QFont('Consolas', pointSize=14))
-        self.setStyleSheet(' border-width: 1px; border-color: #515151 ')
         self.stack = QUndoStack(self)
         self.stack.setUndoLimit(100)
         self.undo, self.redo = self.stack.undo, self.stack.redo
 
         self.undo_ = False
         self.redo_ = False
+
+        self.setLineWrapMode(QPlainTextEdit.NoWrap)
 
     def keyPressEvent(self, e: QtGui.QKeyEvent) -> None:
         if e == QKeySequence.Undo:
@@ -35,13 +50,15 @@ class CodeEditor(QWidget):
         super(CodeEditor, self).__init__(widget)
 
         self.code_field = CodeField(self)
+        self.code_field.setVisible(False)
         self.code_field.textChanged.connect(self.code_change)
 
         self.code = ''
         self.changed = False
         self.tabs = 0
 
-        self.cur = QTextCursor()
+        self.filename = None
+        self.file = None
 
     def code_change(self):
         if self.changed:
@@ -95,3 +112,47 @@ class CodeEditor(QWidget):
 
         self.code_field.setTextCursor(cursor)
         self.code = text
+        self.save()
+
+    def open_file(self, name=None):
+        if not name:
+            filename = QFileDialog.getOpenFileName(
+                self, 'Select file...', '',
+                'All files (*)'
+            )[0]
+            if not filename:
+                return
+        else:
+            filename = name
+        self.filename = filename
+        self.file = open(filename, 'r', encoding='utf-8')
+        self.code_field.setPlainText(self.file.read().replace(' ' * 4, '\t'))
+        self.code_field.setVisible(True)
+
+    def run_script(self):
+        self.generate_bat()
+        Popen(['start', 'cmd', '/c', r'data\run.bat'], shell=True)
+
+    def generate_bat(self):
+        with open('data/run.bat', 'w') as f:
+            f.write('@echo off\n')
+            f.write(f'echo {sys.executable} {self.filename}\n')
+            f.write('echo.\n')
+            f.write(f'{sys.executable} {self.filename}\n')
+            f.write('echo.\n')
+            f.write('pause\n')
+            f.write('exit')
+
+    def save(self):
+        Writer(self.filename, self.code.replace('\t', ' ' * 4)).start()
+
+    def new_file(self):
+        filename = QFileDialog.getSaveFileName(
+            self, 'Save to...', '',
+            'All files (*)'
+        )[0]
+        if not filename:
+            return
+
+        open(filename, 'w').close()
+        self.open_file(filename)

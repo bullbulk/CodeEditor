@@ -1,12 +1,11 @@
 from typing import Tuple
 
+import screeninfo
 from PIL import Image
+from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import QSize, Qt
 from PyQt5.QtGui import QPixmap, QIcon, QMouseEvent, QImage, QFont
 from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QLabel, QPushButton, QMenu, QAction
-
-from PyQt5 import QtCore, QtGui, QtWidgets
-import screeninfo
 
 
 class Ui_MainWindow(object):
@@ -192,16 +191,18 @@ class FramelessWindow(QMainWindow, Ui_MainWindow):
         self.file_menu_b.setText('File')
         self.file_menu_b.setStyleSheet('background-color: #3c3f41;'
                                        'border-style: outset;'
-                                       'border-width: 1px;'
-                                       'border-color: #515151;'
                                        'color: #a9b7c6;')
         self.file_menu_b.setFixedSize(self.icons_w, self.icons_h)
         self.file_menu_b.move(self.window_icon.width() + 8, 0)
         self.file_menu_b.setFont(QFont('Calibri', pointSize=11))
 
-        open_action = QAction(file_menu)
-        open_action.setText('Open')
-        file_menu.addAction(open_action)
+        self.open_action = QAction(file_menu)
+        self.open_action.setText('Open')
+        self.new_action = QAction(file_menu)
+        self.new_action.setText('New')
+        file_menu.addAction(self.new_action)
+        file_menu.addAction(self.open_action)
+
         self.title_bar.addWidget(self.file_menu_b)
 
     def resizeEvent(self, event):
