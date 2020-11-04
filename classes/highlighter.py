@@ -98,7 +98,7 @@ class PythonHighlighter(QSyntaxHighlighter):
                   for o in PythonHighlighter.operators]
         rules += [(r'%s' % b, 0, STYLES['brace'])
                   for b in PythonHighlighter.braces]
-        rules += [(r'[^\.]\b%s\b' % f, 0, STYLES['builtin'])
+        rules += [(r'\b%s\b' % f, 0, STYLES['builtin'])
                   for f in dir(builtins)]
         rules.append((r'__\w+__', 0, STYLES['special_function']))  # special functions like __init__
         rules += [(r'\b%s\b' % v, 0, STYLES['special_variables'])  # special variables like __name__

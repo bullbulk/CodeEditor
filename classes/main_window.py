@@ -21,6 +21,11 @@ class MainWindow(FramelessWindow):
             "QWidget#MainWindow { background-color: #3c3f41 }\n"
             "QWidget#codeWidget { background-color: #2b2b2b }\n"
             "QPlainTextEdit { color: #a9b7c6; background-color: #2b2b2b }\n"
+            "QMenu { background-color: #3c3f41;"
+                    "color: #a9b7c6;"
+                    "border-style: solid;"
+                    "border-width: 1px;"
+                    "border-color: #515151 }"
         )
 
         self.code_widget = CodeEditor(self)

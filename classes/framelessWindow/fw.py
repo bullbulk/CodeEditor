@@ -9,11 +9,11 @@ from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QLabel, QPushButton, QMenu
 
 
 class Button(QPushButton):
-    def __init__(self, win, menu):
+    def __init__(self, win, menu, name):
         super().__init__(win)
 
         self.setMenu(menu)
-        self.setText('File')
+        self.setText(name)
         self.setStyleSheet('background-color: #3c3f41;'
                            'border-style: outset;'
                            'color: #a9b7c6;')
@@ -28,11 +28,6 @@ class Ui_MainWindow(object):
         font = QtGui.QFont()
         font.setFamily("Consolas")
         MainWindow.setFont(font)
-        MainWindow.setStyleSheet("QMainWindow { background-color: #3c3f41 }\n"
-                                 "QMenuBar  { background-color: #3c3f41 }\n"
-                                 "QWidget { background-color: #3c3f41 }\n"
-                                 "QPushButton { background-color: #3c3f41 }\n"
-                                 "QPlainTextEdit { background-color: #2b2b2b }")
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         MainWindow.setCentralWidget(self.centralwidget)
@@ -59,7 +54,7 @@ class FramelessWindow(QMainWindow, Ui_MainWindow):
         :param window_icon: window icon filename
         :param close_icon: window close button filename
         """
-        self.buttons_count = 0
+        self.buttons_width = 0
 
         self.minimized = False
         self.close_icon = close_icon
@@ -104,7 +99,7 @@ class FramelessWindow(QMainWindow, Ui_MainWindow):
         self.setup_title_buttons()
 
         self.move_label = QLabel(self)
-        self.move_label.move(self.window_icon.width() + self.buttons_count * self.icons_w, 0)
+        self.move_label.move(self.window_icon.width() + self.buttons_width, 0)
         self.move_label.setMinimumSize(
             self.width() - self.icons_w * 3 - self.window_icon.size().width(),
             self.window_icon.size().height())
@@ -123,24 +118,25 @@ class FramelessWindow(QMainWindow, Ui_MainWindow):
 
     def setup_menu(self):
         file_menu = QMenu(self)
-        file_menu.setStyleSheet('background-color: #3c3f41;'
-                                'color: #a9b7c6;'
-                                'border-style: solid;'
-                                'border-width: 1px; '
-                                'border-color: #515151')
-
-        self.file_menu_b = Button(self, file_menu)
-        self.file_menu_b.move(self.window_icon.width() + 8 + self.buttons_count * 50, 0)
-        self.buttons_count += 1
-
+        self.file_menu_b = Button(self, file_menu, 'File')
+        self.file_menu_b.move(self.window_icon.width() + 8 + self.buttons_width, 0)
+        self.buttons_width += self.file_menu_b.width()
         self.open_action = QAction(file_menu)
         self.open_action.setText('Open')
         self.new_action = QAction(file_menu)
         self.new_action.setText('New')
         file_menu.addAction(self.new_action)
         file_menu.addAction(self.open_action)
-
         self.title_bar.addWidget(self.file_menu_b)
+
+        settings_menu = QMenu(self)
+        self.tools_menu_b = Button(self, settings_menu, 'Tools')
+        self.tools_menu_b.move(self.window_icon.width() + 8 + self.buttons_width, 0)
+        self.buttons_width += self.tools_menu_b.width()
+        self.settings_action = QAction(settings_menu)
+        self.settings_action.setText('Preferences')
+        settings_menu.addAction(self.settings_action)
+        self.title_bar.addWidget(settings_menu)
 
     def resizeEvent(self, event):
         self.in_resize = True
@@ -149,7 +145,7 @@ class FramelessWindow(QMainWindow, Ui_MainWindow):
         self.restore_button.move(self.size().width() - self.icons_w * 2, 0)
         self.minimize_button.move(self.size().width() - self.icons_w * 3, 0)
         self.move_label.setFixedSize(
-            self.width() - self.icons_w * 3 - self.window_icon.size().width() - self.buttons_count * self.icons_w,
+            self.width() - self.icons_w * 3 - self.window_icon.size().width() - self.buttons_width,
             self.window_icon.size().height()
         )
         super(FramelessWindow, self).resizeEvent(event)
@@ -165,7 +161,8 @@ class FramelessWindow(QMainWindow, Ui_MainWindow):
             self.mouse_move_pos = event.globalPos()
 
         super().mousePressEvent(event)
-#
+
+    #
     def mouseMoveEvent(self, event: QMouseEvent):
         if self.in_resize:
             super(FramelessWindow, self).mouseMoveEvent(event)
@@ -193,7 +190,7 @@ class FramelessWindow(QMainWindow, Ui_MainWindow):
         x = event.pos().x()
         y = event.pos().y()
         if x in range(self.move_label.size().width() + self.window_icon.size().width() +
-                      self.buttons_count * self.icons_w + 1) and y in range(self.move_label.size().height() + 1):
+                      self.buttons_width + 1) and y in range(self.move_label.size().height() + 1):
             return True
 
     def mouseDoubleClickEvent(self, event):
