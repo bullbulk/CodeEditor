@@ -12,4 +12,3 @@ if __name__ == '__main__':
     win = MainWindow(**settings.get_settings())
     win.show()
     sys.exit(app.exec_())
-    print()
