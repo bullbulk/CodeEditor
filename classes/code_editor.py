@@ -2,10 +2,11 @@ import sys
 import threading
 from subprocess import Popen
 
+from PyQt5 import QtGui, Qt
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QWidget, QPlainTextEdit, QFrame
+from PyQt5.QtWidgets import QWidget, QPlainTextEdit, QFrame, QFileDialog
 
-from classes.toolbar import Toolbar
+from classes.highlighter import PythonHighlighter
 
 PAIR_SYMBOLS = {'(': ')', "'": "'", '"': '"', '{': '}', '[': ']'}
 
@@ -21,7 +22,7 @@ class Writer(threading.Thread):
             f.write(self.text)
 
 
-class CodeEditor(QWidget, Toolbar):
+class CodeEditor(QWidget):
     def __init__(self, widget):
         super(CodeEditor, self).__init__(widget)
 
@@ -32,6 +33,7 @@ class CodeEditor(QWidget, Toolbar):
         self.field.setStyleSheet('border-style: solid; border-width: 2px; border-color: #515151')
 
         self.field.setVisible(False)
+        self.highlighter = PythonHighlighter(self.field.document())
         self.field.textChanged.connect(self.code_change)
 
         self.code = ''
@@ -111,3 +113,29 @@ class CodeEditor(QWidget, Toolbar):
 
     def save(self):
         Writer(self.filename, self.code.replace('\t', ' ' * 4)).start()
+
+    def open_file(self, name=None):
+        if not name:
+            filename = QFileDialog.getOpenFileName(
+                self, 'Select file...', '',
+                'All files (*)'
+            )[0]
+            if not filename:
+                return
+        else:
+            filename = name
+        self.filename = filename
+        self.file = open(filename, 'r', encoding='utf-8')
+        self.field.setPlainText(self.file.read().replace(' ' * 4, '\t'))
+        self.field.setVisible(True)
+
+    def new_file(self):
+        filename = QFileDialog.getSaveFileName(
+            self, 'Save to...', '',
+            'All files (*)'
+        )[0]
+        if not filename:
+            return
+
+        open(filename, 'w').close()
+        self.open_file(filename)

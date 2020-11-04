@@ -15,9 +15,6 @@ class MainWindow(FramelessWindow):
 
         self.arg_size = kwargs['size']
 
-        self.config = utils.get_config()
-        self.restore_state()
-
         self.setStyleSheet(
             "QMainWindow { background-color: #3c3f41 }\n"
             "QMenuBar  { background-color: #3c3f41 }\n"
@@ -40,7 +37,8 @@ class MainWindow(FramelessWindow):
         self.open_action.triggered.connect(self.code_widget.open_file)
         self.new_action.triggered.connect(self.code_widget.new_file)
 
-        self.maximized = False
+        self.config = utils.get_config()
+        self.restore_state()
 
     def restore_state(self):
         maximized = self.config.get('maximized', True)
@@ -51,10 +49,15 @@ class MainWindow(FramelessWindow):
             self.restore_button.setVisible(True)
             self.maximize_button.setVisible(False)
 
+        recent_file = self.config.get('recent_filename', None)
+        if recent_file:
+            self.code_widget.open_file(recent_file)
+
     def save_config(self):
         g = self.before_resize if self.before_resize else self.geometry()
         self.config['geometry'] = g.x(), g.y(), g.width(), g.height()
         self.config['maximized'] = self.isMaximized()
+        self.config['recent_filename'] = self.code_widget.filename
         json.dump(self.config, open('data/config.json', 'w'))
 
         utils.clean_data()
@@ -70,6 +73,11 @@ class MainWindow(FramelessWindow):
         super(MainWindow, self).resizeEvent(event)
 
     def keyPressEvent(self, event: QtGui.QKeyEvent):
-        if int(event.modifiers()) == int(Qt.ControlModifier + Qt.ShiftModifier):
+        if int(event.modifiers()) == Qt.ShiftModifier:
             if event.key() == Qt.Key_F10:
                 self.code_widget.run_script()
+        if event.modifiers() == Qt.ControlModifier:
+            if event.key() == Qt.Key_O:
+                self.code_widget.open_file()
+            if event.key() == Qt.Key_N:
+                self.code_widget.new_file()

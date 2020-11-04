@@ -165,7 +165,7 @@ class FramelessWindow(QMainWindow, Ui_MainWindow):
             self.mouse_move_pos = event.globalPos()
 
         super().mousePressEvent(event)
-
+#
     def mouseMoveEvent(self, event: QMouseEvent):
         if self.in_resize:
             super(FramelessWindow, self).mouseMoveEvent(event)
