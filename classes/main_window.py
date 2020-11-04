@@ -1,5 +1,4 @@
 import json
-import sys
 
 from PyQt5 import QtGui
 from PyQt5.QtCore import Qt
@@ -31,7 +30,7 @@ class MainWindow(FramelessWindow):
         self.code_widget.setObjectName('codeWidget')
         self.code_widget.move(8, self.window_icon.height())
 
-        self.code_widget.code_field.verticalScrollBar().setStyleSheet(
+        self.code_widget.field.verticalScrollBar().setStyleSheet(
             'border: 0px;'
             'background: solid #3c3f41;'
             'width: 15px;'
@@ -41,17 +40,19 @@ class MainWindow(FramelessWindow):
         self.open_action.triggered.connect(self.code_widget.open_file)
         self.new_action.triggered.connect(self.code_widget.new_file)
 
+        self.maximized = False
+
     def restore_state(self):
         maximized = self.config.get('maximized', True)
         last_geometry = self.config.get('geometry', (0, 0, *self.arg_size))
+        self.setGeometry(*last_geometry)
         if maximized:
             self.setWindowState(Qt.WindowMaximized)
             self.restore_button.setVisible(True)
             self.maximize_button.setVisible(False)
-        self.setGeometry(*last_geometry)
 
     def save_config(self):
-        g = self.geometry()
+        g = self.before_resize if self.before_resize else self.geometry()
         self.config['geometry'] = g.x(), g.y(), g.width(), g.height()
         self.config['maximized'] = self.isMaximized()
         json.dump(self.config, open('data/config.json', 'w'))
@@ -65,7 +66,7 @@ class MainWindow(FramelessWindow):
     def resizeEvent(self, event):
         self.code_widget.resize(self.size().width() - 16,
                                 self.size().height() - self.window_icon.size().height() - 8)
-        self.code_widget.code_field.resize(self.code_widget.size())
+        self.code_widget.field.resize(self.code_widget.size())
         super(MainWindow, self).resizeEvent(event)
 
     def keyPressEvent(self, event: QtGui.QKeyEvent):
