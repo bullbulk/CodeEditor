@@ -2,6 +2,7 @@ import json
 
 from PyQt5 import QtGui
 from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QMessageBox
 
 from classes.code_editor import CodeEditor
 from classes.framelessWindow.fw import FramelessWindow
@@ -15,7 +16,7 @@ class MainWindow(FramelessWindow):
 
         self.arg_size = kwargs['size']
 
-        with open('data/style.css') as f:
+        with open('data/style.qss') as f:
             self.setStyleSheet(f.read())
 
         self.code_widget = CodeEditor(self)
@@ -49,11 +50,26 @@ class MainWindow(FramelessWindow):
         self.config['recent_filename'] = self.code_widget.filename
         json.dump(self.config, open('data/config.json', 'w'))
 
-        utils.clean_data()
+        utils.clear_data()
 
     def close(self):
+        if self.code_widget.code != open(self.code_widget.filename, 'r', encoding='utf-8') \
+                .read().replace(' ' * 4, '\t'):
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Information)
+            msg.setWindowTitle('Save on close')
+            msg.setText('Do you want to save this document before closing?')
+            y = msg.addButton('Yes', QMessageBox.YesRole)
+            msg.addButton('No', QMessageBox.NoRole)
+            c = msg.addButton('Cancel', QMessageBox.RejectRole)
+            msg.exec()
+
+            if msg.clickedButton() == y:
+                self.code_widget.save(agreed=True)
+            if msg.clickedButton() == c:
+                return
+
         self.save_config()
-        self.code_widget.save()
         super(MainWindow, self).close()
 
     def resizeEvent(self, event):
@@ -63,9 +79,13 @@ class MainWindow(FramelessWindow):
         super(MainWindow, self).resizeEvent(event)
 
     def keyPressEvent(self, event: QtGui.QKeyEvent):
-        if int(event.modifiers()) == Qt.ShiftModifier:
+        if int(event.modifiers()) == int(Qt.ShiftModifier + Qt.ControlModifier):
             if event.key() == Qt.Key_F10:
+                if self.code_widget.code != open(self.code_widget.filename, 'r', encoding='utf-8') \
+                        .read().replace(' ' * 4, '\t'):
+                    self.code_widget.save()
                 self.code_widget.run_script()
+
         if event.modifiers() == Qt.ControlModifier:
             if event.key() == Qt.Key_O:
                 self.code_widget.open_file()

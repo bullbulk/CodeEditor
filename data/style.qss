@@ -1,0 +1,36 @@
+QMainWindow {
+    background-color: #3c3f41;
+}
+
+QMenuBar {
+    background-color: #3c3f41;
+}
+
+QWidget#MainWindow {
+    background-color: #3c3f41;
+}
+
+QWidget#codeWidget {
+    background-color: #2b2b2b;
+}
+
+QPlainTextEdit {
+    color: #a9b7c6;
+    background-color: #2b2b2b;
+}
+
+QMenu {
+    background-color: #3c3f41;
+    color: #a9b7c6;
+    border-style: solid;
+    border-width: 1px;
+    border-color: #515151;
+}
+
+
+QScrollBar {
+    border: 0px;
+    background: solid #3c3f41;
+    width: 20px;
+    margin: 0px 0px 0px 0px;
+}

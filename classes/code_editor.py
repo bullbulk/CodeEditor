@@ -1,14 +1,12 @@
 import sys
-import threading
 from subprocess import Popen
 
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QWidget, QPlainTextEdit, QFrame, QFileDialog
+from PyQt5.QtWidgets import QWidget, QPlainTextEdit, QFrame, QFileDialog, QMessageBox
 
 from classes.highlighter import PythonHighlighter
 
 PAIR_SYMBOLS = {'(': ')', "'": "'", '"': '"', '{': '}', '[': ']'}
-
 
 
 class CodeEditor(QWidget):
@@ -84,7 +82,6 @@ class CodeEditor(QWidget):
 
         self.field.setTextCursor(cursor)
         self.code = text
-        self.save()
 
     def run_script(self):
         self.generate_bat()
@@ -100,9 +97,24 @@ class CodeEditor(QWidget):
             f.write('pause\n')
             f.write('exit')
 
-    def save(self):
-        with open(self.filename, 'w') as f:
-            f.write(self.code.replace('\t', ' ' * 4))
+    def save(self, agreed=False):
+        if not agreed:
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Information)
+            msg.setWindowTitle('Save before run or check')
+            msg.setText('Source must be saved\nOK to save')
+            y = msg.addButton('OK', QMessageBox.YesRole)
+            msg.addButton('Cancel', QMessageBox.RejectRole)
+            msg.exec()
+            if msg.clickedButton() == y:
+                save = True
+            else:
+                return
+        else:
+            save = True
+        if save:
+            with open(self.filename, 'w') as f:
+                f.write(self.code.replace('\t', ' ' * 4))
 
     def open_file(self, name=None):
         if not name:
@@ -129,6 +141,6 @@ class CodeEditor(QWidget):
 
         open(filename, 'w').close()
         self.open_file(filename)
-        
+
     def settings(self):
         ...

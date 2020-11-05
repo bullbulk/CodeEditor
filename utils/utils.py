@@ -24,7 +24,7 @@ def get_config() -> dict:
     return c
 
 
-def clean_data():
+def clear_data():
     for i in os.listdir('data'):
-        if i not in ['config.json', 'style.css']:
+        if i not in ['config.json', 'style.qss']:
             os.remove('data/' + i)
