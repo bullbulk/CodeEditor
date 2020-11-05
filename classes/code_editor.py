@@ -2,7 +2,6 @@ import sys
 import threading
 from subprocess import Popen
 
-from PyQt5 import QtGui, Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QPlainTextEdit, QFrame, QFileDialog
 
@@ -10,16 +9,6 @@ from classes.highlighter import PythonHighlighter
 
 PAIR_SYMBOLS = {'(': ')', "'": "'", '"': '"', '{': '}', '[': ']'}
 
-
-class Writer(threading.Thread):
-    def __init__(self, filename, text):
-        super().__init__()
-        self.filename = filename
-        self.text = text
-
-    def run(self):
-        with open(self.filename, 'w') as f:
-            f.write(self.text)
 
 
 class CodeEditor(QWidget):
@@ -112,7 +101,8 @@ class CodeEditor(QWidget):
             f.write('exit')
 
     def save(self):
-        Writer(self.filename, self.code.replace('\t', ' ' * 4)).start()
+        with open(self.filename, 'w') as f:
+            f.write(self.code.replace('\t', ' ' * 4))
 
     def open_file(self, name=None):
         if not name:
@@ -139,3 +129,6 @@ class CodeEditor(QWidget):
 
         open(filename, 'w').close()
         self.open_file(filename)
+        
+    def settings(self):
+        ...

@@ -15,32 +15,16 @@ class MainWindow(FramelessWindow):
 
         self.arg_size = kwargs['size']
 
-        self.setStyleSheet(
-            "QMainWindow { background-color: #3c3f41 }\n"
-            "QMenuBar  { background-color: #3c3f41 }\n"
-            "QWidget#MainWindow { background-color: #3c3f41 }\n"
-            "QWidget#codeWidget { background-color: #2b2b2b }\n"
-            "QPlainTextEdit { color: #a9b7c6; background-color: #2b2b2b }\n"
-            "QMenu { background-color: #3c3f41;"
-                    "color: #a9b7c6;"
-                    "border-style: solid;"
-                    "border-width: 1px;"
-                    "border-color: #515151 }"
-        )
+        with open('data/style.css') as f:
+            self.setStyleSheet(f.read())
 
         self.code_widget = CodeEditor(self)
         self.code_widget.setObjectName('codeWidget')
         self.code_widget.move(8, self.window_icon.height())
 
-        self.code_widget.field.verticalScrollBar().setStyleSheet(
-            'border: 0px;'
-            'background: solid #3c3f41;'
-            'width: 15px;'
-            'margin: 0px 0px 0px 0px'
-        )
-
         self.open_action.triggered.connect(self.code_widget.open_file)
         self.new_action.triggered.connect(self.code_widget.new_file)
+        self.settings_action.triggered.connect(self.code_widget.settings)
 
         self.config = utils.get_config()
         self.restore_state()
@@ -69,6 +53,7 @@ class MainWindow(FramelessWindow):
 
     def close(self):
         self.save_config()
+        self.code_widget.save()
         super(MainWindow, self).close()
 
     def resizeEvent(self, event):

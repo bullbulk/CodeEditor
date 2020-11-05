@@ -14,9 +14,7 @@ class Button(QPushButton):
 
         self.setMenu(menu)
         self.setText(name)
-        self.setStyleSheet('background-color: #3c3f41;'
-                           'border-style: outset;'
-                           'color: #a9b7c6;')
+        self.setObjectName('Button')
         self.setFixedSize(win.icons_w, win.icons_h)
         self.setFont(QFont('Calibri', pointSize=11))
 
