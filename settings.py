@@ -10,4 +10,4 @@ def get_settings():
         restore_icon='classes/framelessWindow/buttons/restore.png',
         minimize_icon='classes/framelessWindow/buttons/minimize.png',
 
-    )
+    ) 

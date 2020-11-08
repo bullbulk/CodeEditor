@@ -1,6 +1,8 @@
 import json
 import os
 import sys
+from PIL import Image
+from PyQt5.QtGui import QImage, QPixmap
 
 
 def setup_excepthook():
@@ -28,3 +30,14 @@ def clear_data():
     for i in os.listdir('data'):
         if i not in ['config.json', 'style.qss']:
             os.remove('data/' + i)
+
+
+def get_pixmap(im, w, h):
+    icon = Image.open(im).resize((w, h))
+    return QPixmap.fromImage(
+        QImage(
+            icon.tobytes(),
+            icon.size[0], icon.size[1],
+            QImage.Format_ARGB32
+        )
+    )

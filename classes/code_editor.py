@@ -5,6 +5,7 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QPlainTextEdit, QFrame, QFileDialog, QMessageBox
 
 from classes.highlighter import PythonHighlighter
+from classes.framelessWindow import fw
 
 PAIR_SYMBOLS = {'(': ')', "'": "'", '"': '"', '{': '}', '[': ']'}
 
@@ -29,6 +30,8 @@ class CodeEditor(QWidget):
 
         self.filename = None
         self.file = None
+
+        self.kwargs = {}
 
     def code_change(self):
         if self.changed:
@@ -115,8 +118,12 @@ class CodeEditor(QWidget):
         if save:
             with open(self.filename, 'w') as f:
                 f.write(self.code.replace('\t', ' ' * 4))
+        return save
 
     def open_file(self, name=None):
+        reply = self.close_file()
+        if not reply:
+            return
         if not name:
             filename = QFileDialog.getOpenFileName(
                 self, 'Select file...', '',
@@ -126,12 +133,18 @@ class CodeEditor(QWidget):
                 return
         else:
             filename = name
+        try:
+            self.file = open(filename, 'r', encoding='utf-8')
+        except FileNotFoundError:
+            return
         self.filename = filename
-        self.file = open(filename, 'r', encoding='utf-8')
         self.field.setPlainText(self.file.read().replace(' ' * 4, '\t'))
         self.field.setVisible(True)
 
     def new_file(self):
+        reply = self.close_file()
+        if not reply:
+            return
         filename = QFileDialog.getSaveFileName(
             self, 'Save to...', '',
             'All files (*)'
@@ -142,5 +155,25 @@ class CodeEditor(QWidget):
         open(filename, 'w').close()
         self.open_file(filename)
 
-    def settings(self):
-        ...
+    def close_file(self):
+        if not self.filename:
+            return True
+        if self.code == open(self.filename, 'r', encoding='utf-8') \
+                .read().replace(' ' * 4, '\t'):
+            return True
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Information)
+        msg.setWindowTitle('Save on close')
+        msg.setText('Do you want to save this document before closing?')
+        y = msg.addButton('Yes', QMessageBox.YesRole)
+        n = msg.addButton('No', QMessageBox.NoRole)
+        c = msg.addButton('Cancel', QMessageBox.RejectRole)
+        msg.exec()
+
+        if msg.clickedButton() == y:
+            self.save(agreed=True)
+            return True
+        if msg.clickedButton() == n:
+            return True
+        if msg.clickedButton() == c:
+            return False

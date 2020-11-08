@@ -2,16 +2,16 @@ import json
 
 from PyQt5 import QtGui
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QMessageBox
 
 from classes.code_editor import CodeEditor
 from classes.framelessWindow.fw import FramelessWindow
+from classes.settings import SettingsWindow
 from utils import utils
 
 
 class MainWindow(FramelessWindow):
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(None, **kwargs)
         self.kwargs = kwargs
 
         self.arg_size = kwargs['size']
@@ -22,13 +22,18 @@ class MainWindow(FramelessWindow):
         self.code_widget = CodeEditor(self)
         self.code_widget.setObjectName('codeWidget')
         self.code_widget.move(8, self.window_icon.height())
+        self.code_widget.kwargs = self.kwargs
 
         self.open_action.triggered.connect(self.code_widget.open_file)
         self.new_action.triggered.connect(self.code_widget.new_file)
-        self.settings_action.triggered.connect(self.code_widget.settings)
+        self.settings_action.triggered.connect(self.show_settings)
 
         self.config = utils.get_config()
         self.restore_state()
+
+    def show_settings(self):
+        w = SettingsWindow(self, **self.kwargs)
+        w.show()
 
     def restore_state(self):
         maximized = self.config.get('maximized', True)
@@ -55,20 +60,9 @@ class MainWindow(FramelessWindow):
     def close(self):
         if self.code_widget.code != open(self.code_widget.filename, 'r', encoding='utf-8') \
                 .read().replace(' ' * 4, '\t'):
-            msg = QMessageBox()
-            msg.setIcon(QMessageBox.Information)
-            msg.setWindowTitle('Save on close')
-            msg.setText('Do you want to save this document before closing?')
-            y = msg.addButton('Yes', QMessageBox.YesRole)
-            msg.addButton('No', QMessageBox.NoRole)
-            c = msg.addButton('Cancel', QMessageBox.RejectRole)
-            msg.exec()
-
-            if msg.clickedButton() == y:
-                self.code_widget.save(agreed=True)
-            if msg.clickedButton() == c:
+            reply = self.code_widget.close_file()
+            if not reply:
                 return
-
         self.save_config()
         super(MainWindow, self).close()
 
@@ -83,7 +77,8 @@ class MainWindow(FramelessWindow):
             if event.key() == Qt.Key_F10:
                 if self.code_widget.code != open(self.code_widget.filename, 'r', encoding='utf-8') \
                         .read().replace(' ' * 4, '\t'):
-                    self.code_widget.save()
+                    if not self.code_widget.save():
+                        return
                 self.code_widget.run_script()
 
         if event.modifiers() == Qt.ControlModifier:

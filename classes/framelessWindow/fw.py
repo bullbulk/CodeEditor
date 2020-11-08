@@ -5,27 +5,30 @@ from PIL import Image
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import QSize, Qt
 from PyQt5.QtGui import QPixmap, QIcon, QMouseEvent, QImage, QFont
-from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QLabel, QPushButton, QMenu, QAction
+from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QLabel, QPushButton, QMenu, QAction, QWidget
+
+from utils import utils
 
 
 class Button(QPushButton):
-    def __init__(self, win, menu, name):
+    def __init__(self, win: QWidget, menu: QMenu, name: str):
         super().__init__(win)
 
         self.setMenu(menu)
         self.setText(name)
-        self.setObjectName('Button')
         self.setFixedSize(win.icons_w, win.icons_h)
         self.setFont(QFont('Calibri', pointSize=11))
         self.setStyleSheet('QPushButton {'
-                                'background-color: #3c3f41;'
-                                'border-style: outset;'
-                                'color: #a9b7c6;'
-                            '}'
-                            
-                            'QPushButton:pressed {'
-                                'background-color: #4B6EAF;'
-                            '}')
+                           'background-color: #3C3F41;'
+                           'border-style: outset;'
+                           'color: #A9B7C6;'
+                           '}'
+
+                           'QPushButton:pressed {'
+                           'background-color: #4B6EAF;'
+                           '}'
+
+                           'QPushButton::menu-indicator { image: none; }')
 
 
 class Ui_MainWindow(object):
@@ -51,11 +54,12 @@ class Ui_MainWindow(object):
 
 
 class FramelessWindow(QMainWindow, Ui_MainWindow):
-    def __init__(self, size: Tuple[int, int] = (1000, 500),
+    def __init__(self, parent, size: Tuple[int, int] = (1000, 500),
                  max_size: Tuple[int, int] = None,
                  min_size: Tuple[int, int] = None,
                  *, window_icon: str, close_icon: str,
-                 maximize_icon: str, restore_icon: str, minimize_icon: str):
+                 maximize_icon: str, restore_icon: str, minimize_icon: str,
+                 subwindow=False):
         """
         :param min_size: minimum window size (width, height)
         :param window_icon: window icon filename
@@ -69,6 +73,7 @@ class FramelessWindow(QMainWindow, Ui_MainWindow):
         self.restore_icon = restore_icon
         self.minimize_icon = minimize_icon
         self.window_icon_im = window_icon
+        self.subwindow = subwindow
 
         display = screeninfo.get_monitors()[0]
         self.display_w, self.display_h = display.width, display.height
@@ -78,7 +83,7 @@ class FramelessWindow(QMainWindow, Ui_MainWindow):
         for var, icon in self.check_icons().items():
             raise FileNotFoundError(f'Icon for {var} in {icon} not found. Please, fill the settings.py correctly')
 
-        super(FramelessWindow, self).__init__()
+        super(FramelessWindow, self).__init__(parent)
         self.setupUi(self)
         self.setWindowFlag(Qt.FramelessWindowHint)
 
@@ -103,12 +108,13 @@ class FramelessWindow(QMainWindow, Ui_MainWindow):
         self.window_icon.resize(self.icons_h, self.icons_h)
         self.title_bar.addWidget(self.window_icon)
 
+        self.special_buttons = 0
         self.setup_title_buttons()
 
         self.move_label = QLabel(self)
         self.move_label.move(self.window_icon.width() + self.buttons_width, 0)
         self.move_label.setMinimumSize(
-            self.width() - self.icons_w * 3 - self.window_icon.size().width(),
+            self.width() - self.icons_w * self.special_buttons - self.window_icon.size().width(),
             self.window_icon.size().height())
         self.title_bar.addWidget(self.move_label)
 
@@ -148,11 +154,12 @@ class FramelessWindow(QMainWindow, Ui_MainWindow):
     def resizeEvent(self, event):
         self.in_resize = True
         self.close_button.move(self.size().width() - self.icons_w, 0)
-        self.maximize_button.move(self.size().width() - self.icons_w * 2, 0)
-        self.restore_button.move(self.size().width() - self.icons_w * 2, 0)
-        self.minimize_button.move(self.size().width() - self.icons_w * 3, 0)
+        if not self.subwindow:
+            self.maximize_button.move(self.size().width() - self.icons_w * 2, 0)
+            self.restore_button.move(self.size().width() - self.icons_w * 2, 0)
+            self.minimize_button.move(self.size().width() - self.icons_w * 3, 0)
         self.move_label.setFixedSize(
-            self.width() - self.icons_w * 3 - self.window_icon.size().width() - self.buttons_width,
+            self.width() - self.icons_w * self.special_buttons - self.window_icon.size().width() - self.buttons_width,
             self.window_icon.size().height()
         )
         super(FramelessWindow, self).resizeEvent(event)
@@ -256,53 +263,47 @@ class FramelessWindow(QMainWindow, Ui_MainWindow):
         self.close_button.setFixedSize(QSize(self.icons_w, self.window_icon.size().height()))
         self.close_button.setStyleSheet('QPushButton { border-style: outset }'
                                         'QPushButton::hover { background-color: red }')
-        self.minimize_button = QPushButton(self)
-        self.minimize_button.setFixedSize(QSize(self.icons_w, self.window_icon.size().height()))
-        self.minimize_button.setStyleSheet('QPushButton { border-style: outset }'
-                                           'QPushButton::hover { background-color: grey }')
-        self.maximize_button = QPushButton(self)
-        self.maximize_button.setFixedSize(QSize(self.icons_w, self.window_icon.size().height()))
-        self.maximize_button.setStyleSheet('QPushButton { border-style: outset }'
-                                           'QPushButton::hover { background-color: grey }')
-        self.restore_button = QPushButton(self)
-        self.restore_button.setFixedSize(QSize(self.icons_w, self.window_icon.size().height()))
-        self.restore_button.setStyleSheet('QPushButton { border-style: outset}'
-                                          'QPushButton::hover { background-color: grey }')
-
-        close_icon = QIcon(self.get_pixmap(self.close_icon, self.icons_w, self.icons_h))
+        close_icon = QIcon(utils.get_pixmap(self.close_icon, self.icons_w, self.icons_h))
         self.close_button.setIcon(close_icon)
         self.close_button.setIconSize(self.close_button.size())
         self.close_button.clicked.connect(self.close)
+        self.special_buttons += 1
 
-        maximize_icon = QIcon(self.get_pixmap(self.maximize_icon, self.icons_w, self.icons_h))
-        self.maximize_button.setIcon(maximize_icon)
-        self.maximize_button.setIconSize(self.maximize_button.size())
-        self.maximize_button.clicked.connect(self.maximize)
+        if not self.subwindow:
+            self.maximize_button = QPushButton(self)
+            self.maximize_button.setFixedSize(QSize(self.icons_w, self.window_icon.size().height()))
+            self.maximize_button.setStyleSheet('QPushButton { border-style: outset }'
+                                               'QPushButton::hover { background-color: grey }')
+            maximize_icon = QIcon(utils.get_pixmap(self.maximize_icon, self.icons_w, self.icons_h))
+            self.maximize_button.setIcon(maximize_icon)
+            self.maximize_button.setIconSize(self.maximize_button.size())
+            self.maximize_button.clicked.connect(self.maximize)
 
-        restore_icon = QIcon(self.get_pixmap(self.restore_icon, self.icons_w, self.icons_h))
-        self.restore_button.setIcon(restore_icon)
-        self.restore_button.setIconSize(self.restore_button.size())
-        self.restore_button.clicked.connect(self.restore)
-        self.restore_button.setVisible(False)
+            self.restore_button = QPushButton(self)
+            self.restore_button.setFixedSize(QSize(self.icons_w, self.window_icon.size().height()))
+            self.restore_button.setStyleSheet('QPushButton { border-style: outset}'
+                                              'QPushButton::hover { background-color: grey }')
+            restore_icon = QIcon(utils.get_pixmap(self.restore_icon, self.icons_w, self.icons_h))
+            self.restore_button.setIcon(restore_icon)
+            self.restore_button.setIconSize(self.restore_button.size())
+            self.restore_button.clicked.connect(self.restore)
+            self.restore_button.setVisible(False)
+            self.special_buttons += 1
 
-        minimize_icon = QIcon(self.get_pixmap(self.minimize_icon, self.icons_w, self.icons_h))
-        self.minimize_button.setIcon(minimize_icon)
-        self.minimize_button.setIconSize(self.minimize_button.size())
-        self.minimize_button.clicked.connect(self.minimize)
+            self.minimize_button = QPushButton(self)
+            self.minimize_button.setFixedSize(QSize(self.icons_w, self.window_icon.size().height()))
+            self.minimize_button.setStyleSheet('QPushButton { border-style: outset }'
+                                               'QPushButton::hover { background-color: grey }')
+            minimize_icon = QIcon(utils.get_pixmap(self.minimize_icon, self.icons_w, self.icons_h))
+            self.minimize_button.setIcon(minimize_icon)
+            self.minimize_button.setIconSize(self.minimize_button.size())
+            self.minimize_button.clicked.connect(self.minimize)
+            self.special_buttons += 1
 
-        self.setup_menu()
+            self.title_bar.addWidget(self.maximize_button)
+            self.title_bar.addWidget(self.minimize_button)
+            self.title_bar.addWidget(self.minimize_button)
+
+            self.setup_menu()
 
         self.title_bar.addWidget(self.close_button)
-        self.title_bar.addWidget(self.maximize_button)
-        self.title_bar.addWidget(self.minimize_button)
-        self.title_bar.addWidget(self.minimize_button)
-
-    def get_pixmap(self, im, w, h):
-        icon = Image.open(im).resize((w, h))
-        return QPixmap.fromImage(
-            QImage(
-                icon.tobytes(),
-                icon.size[0], icon.size[1],
-                QImage.Format_ARGB32
-            )
-        )

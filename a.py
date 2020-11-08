@@ -11,4 +11,4 @@ if __name__ == '__main__':
     utils.setup_excepthook()
     win = MainWindow(**settings.get_settings())
     win.show()
-    sys.exit(app.exec_()) 
+    sys.exit(app.exec_())
