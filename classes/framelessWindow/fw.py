@@ -4,7 +4,7 @@ import screeninfo
 from PIL import Image
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import QSize, Qt
-from PyQt5.QtGui import QPixmap, QIcon, QMouseEvent, QImage, QFont
+from PyQt5.QtGui import QPixmap, QIcon, QMouseEvent, QImage, QFont, QKeySequence
 from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QLabel, QPushButton, QMenu, QAction, QWidget
 
 from utils import utils
@@ -136,20 +136,36 @@ class FramelessWindow(QMainWindow, Ui_MainWindow):
         self.buttons_width += self.file_menu_b.width()
         self.open_action = QAction(file_menu)
         self.open_action.setText('Open')
+        self.open_action.setShortcuts(QKeySequence(int(Qt.ControlModifier + Qt.Key_O)))
         self.new_action = QAction(file_menu)
         self.new_action.setText('New')
+        self.new_action.setShortcuts(QKeySequence(int(Qt.ControlModifier + Qt.Key_N)))
+        self.save_action = QAction(file_menu)
+        self.save_action.setText('Save')
+        self.save_action.setShortcuts(QKeySequence(int(Qt.ControlModifier + Qt.Key_S)))
         file_menu.addAction(self.new_action)
         file_menu.addAction(self.open_action)
+        file_menu.addAction(self.save_action)
         self.title_bar.addWidget(self.file_menu_b)
 
-        settings_menu = QMenu(self)
-        self.tools_menu_b = Button(self, settings_menu, 'Tools')
+        tools_menu = QMenu(self)
+        self.tools_menu_b = Button(self, tools_menu, 'Tools')
         self.tools_menu_b.move(self.window_icon.width() + 8 + self.buttons_width, 0)
         self.buttons_width += self.tools_menu_b.width()
-        self.settings_action = QAction(settings_menu)
-        self.settings_action.setText('Preferences')
-        settings_menu.addAction(self.settings_action)
-        self.title_bar.addWidget(settings_menu)
+        self.settings_action = QAction(tools_menu)
+        self.settings_action.setText('Settings')
+        tools_menu.addAction(self.settings_action)
+        self.title_bar.addWidget(tools_menu)
+
+        run_menu = QMenu(self)
+        self.run_menu_b = Button(self, run_menu, 'Run')
+        self.run_menu_b.move(self.window_icon.width() + 8 + self.buttons_width, 0)
+        self.buttons_width += self.run_menu_b.width()
+        self.run_action = QAction(run_menu)
+        self.run_action.setText('Run')
+        self.run_action.setShortcuts(QKeySequence(int(Qt.ShiftModifier + Qt.ControlModifier + Qt.Key_F10)))
+        run_menu.addAction(self.run_action)
+        self.title_bar.addWidget(run_menu)
 
     def resizeEvent(self, event):
         self.in_resize = True

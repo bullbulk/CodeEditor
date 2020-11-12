@@ -16,7 +16,7 @@ class MainWindow(FramelessWindow):
 
         self.arg_size = kwargs['size']
 
-        with open('data/style.qss') as f:
+        with open('style.qss') as f:
             self.setStyleSheet(f.read())
 
         self.code_widget = CodeEditor(self)
@@ -26,14 +26,19 @@ class MainWindow(FramelessWindow):
 
         self.open_action.triggered.connect(self.code_widget.open_file)
         self.new_action.triggered.connect(self.code_widget.new_file)
+        self.save_action.triggered.connect(lambda: self.code_widget.save(agreed=True))
         self.settings_action.triggered.connect(self.show_settings)
+        self.run_action.triggered.connect(self.code_widget.run_script)
 
         self.config = utils.get_config()
         self.restore_state()
 
+        self.settings = utils.get_settings()
+        self.settings_w = SettingsWindow(self, self.settings, **self.kwargs)
+        self.restore_settings()
+
     def show_settings(self):
-        w = SettingsWindow(self, **self.kwargs)
-        w.show()
+        self.settings_w.show()
 
     def restore_state(self):
         maximized = self.config.get('maximized', True)
@@ -48,21 +53,34 @@ class MainWindow(FramelessWindow):
         if recent_file:
             self.code_widget.open_file(recent_file)
 
+    def restore_settings(self):
+        highlighting = self.settings.get('highlighting', True)
+        input_help = self.settings.get('help', True)
+        if highlighting:
+            self.settings_w.settings['highlighting'].click()
+        if input_help:
+            self.settings_w.settings['input_help'].click()
+        self.settings_w.highlighting()
+        self.settings_w.input_help()
+
     def save_config(self):
+        self.save_state()
+        utils.clear_data()
+
+    def save_state(self):
         g = self.before_resize if self.before_resize else self.geometry()
         self.config['geometry'] = g.x(), g.y(), g.width(), g.height()
         self.config['maximized'] = self.isMaximized()
         self.config['recent_filename'] = self.code_widget.filename
         json.dump(self.config, open('data/config.json', 'w'))
 
-        utils.clear_data()
-
     def close(self):
-        if self.code_widget.code != open(self.code_widget.filename, 'r', encoding='utf-8') \
-                .read().replace(' ' * 4, '\t'):
-            reply = self.code_widget.close_file()
-            if not reply:
-                return
+        if self.code_widget.filename:
+            if self.code_widget.code != open(self.code_widget.filename, 'r', encoding='utf-8') \
+                    .read().replace(' ' * 4, '\t'):
+                reply = self.code_widget.close_file()
+                if not reply:
+                    return
         self.save_config()
         super(MainWindow, self).close()
 
@@ -86,3 +104,5 @@ class MainWindow(FramelessWindow):
                 self.code_widget.open_file()
             if event.key() == Qt.Key_N:
                 self.code_widget.new_file()
+            if event.key() == Qt.Key_S:
+                self.code_widget.save(agreed=True)

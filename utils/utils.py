@@ -1,9 +1,12 @@
 import json
 import os
 import sys
+
 from PIL import Image
 from PyQt5.QtGui import QImage, QPixmap
 
+
+REQUIRED_FILES = ['config.json', 'style.qss', 'settings.json']
 
 def setup_excepthook():
     _excepthook = sys.excepthook
@@ -26,13 +29,25 @@ def get_config() -> dict:
     return c
 
 
+def get_settings() -> dict:
+    if 'data' not in os.listdir():
+        os.mkdir('data')
+    if 'settings.json' not in os.listdir('data'):
+        json.dump({}, open('data/settings.json', 'w'))
+    c = json.load(open('data/settings.json', 'r'))
+    if type(c) != dict:
+        raise TypeError(
+            'Invalid settings file. The result of deserialization must be a dict. Delete the settings.json.')
+    return c
+
+
 def clear_data():
     for i in os.listdir('data'):
-        if i not in ['config.json', 'style.qss']:
+        if i not in REQUIRED_FILES:
             os.remove('data/' + i)
 
 
-def get_pixmap(im, w, h):
+def get_pixmap(im, w, h) -> QPixmap:
     icon = Image.open(im).resize((w, h))
     return QPixmap.fromImage(
         QImage(

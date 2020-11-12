@@ -5,7 +5,6 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QPlainTextEdit, QFrame, QFileDialog, QMessageBox
 
 from classes.highlighter import PythonHighlighter
-from classes.framelessWindow import fw
 
 PAIR_SYMBOLS = {'(': ')', "'": "'", '"': '"', '{': '}', '[': ']'}
 
@@ -22,7 +21,7 @@ class CodeEditor(QWidget):
 
         self.field.setVisible(False)
         self.highlighter = PythonHighlighter(self.field.document())
-        self.field.textChanged.connect(self.code_change)
+        self.enable_help()
 
         self.code = ''
         self.changed = False
@@ -32,6 +31,28 @@ class CodeEditor(QWidget):
         self.file = None
 
         self.kwargs = {}
+
+    def enable_help(self):
+        self.field.textChanged.connect(self.code_change)
+
+    def disable_help(self):
+        self.field.textChanged.connect(self.code_change_help_disabled)
+
+    def pass_f(self):
+        pass
+
+    def enable_highlighter(self):
+        self.highlighter.enable()
+        self.rehighlight()
+
+    def disable_highlighter(self):
+        self.highlighter.disable()
+        self.rehighlight()
+
+    def rehighlight(self):
+        self.highlighter.rehighlight()
+        self.field.setPlainText(self.field.toPlainText() + '.')
+        self.field.setPlainText(self.field.toPlainText()[:-1])
 
     def code_change(self):
         if self.changed:
@@ -84,6 +105,14 @@ class CodeEditor(QWidget):
         cursor.setPosition(cur_pos)
 
         self.field.setTextCursor(cursor)
+        self.code = text
+
+    def code_change_help_disabled(self):
+        if self.changed:
+            self.changed = False
+            return
+        self.changed = True
+        text = self.field.toPlainText()
         self.code = text
 
     def run_script(self):

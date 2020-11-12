@@ -133,9 +133,19 @@ class PythonHighlighter(QSyntaxHighlighter):
         self.rules = [(QRegExp(pat), index, fmt)
                       for (pat, index, fmt) in rules]
 
+        self.disabled = False
+
+    def disable(self):
+        self.disabled = True
+
+    def enable(self):
+        self.disabled = False
+
     def highlightBlock(self, text):
         """Apply syntax highlighting to the given block of text.
         """
+        if self.disabled:
+            return
         # Do other syntax formatting
         for expression, nth, format_ in self.rules:
             index = expression.indexIn(text, 0)
