@@ -112,11 +112,13 @@ class CodeEditor(QWidget):
             self.changed = False
             return
         self.changed = True
-        text = self.field.toPlainText()
-        self.code = text
+        self.code = self.field.toPlainText()
 
     def run_script(self):
+        if not self.filename:
+            return
         self.generate_bat()
+        # TODO: Add custom run window
         Popen(['start', 'cmd', '/c', r'data\run.bat'], shell=True)
 
     def generate_bat(self):
