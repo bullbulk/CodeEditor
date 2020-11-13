@@ -12,6 +12,8 @@ from utils import utils
 class MainWindow(FramelessWindow):
     def __init__(self, **kwargs):
         super().__init__(None, **kwargs)
+        self.setWindowTitle('YandexEditor')
+
         self.kwargs = kwargs
 
         self.arg_size = kwargs['size']

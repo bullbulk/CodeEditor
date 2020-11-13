@@ -1,11 +1,10 @@
 from typing import Tuple, Union
 
-import screeninfo
 from PIL import Image
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import QSize, Qt
-from PyQt5.QtGui import QPixmap, QIcon, QMouseEvent, QImage, QFont, QKeySequence, QResizeEvent
-from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QLabel, QPushButton, QMenu, QAction, QWidget
+from PyQt5.QtGui import QIcon, QMouseEvent, QFont, QKeySequence, QResizeEvent
+from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QLabel, QPushButton, QMenu, QAction, QWidget, QApplication
 
 from utils import utils
 
@@ -70,8 +69,7 @@ class FramelessWindow(QMainWindow, Ui_MainWindow):
         self.window_icon_im = window_icon
         self.subwindow = subwindow
 
-        display = screeninfo.get_monitors()[0]
-        self.display_w, self.display_h = display.width, display.height
+        self.display_w, self.display_h = QApplication.desktop().width(), QApplication.desktop().height()
         # TODO: Add sizes for resolutions not only 16:9
         self.icons_w = int(self.display_w / 1600 * 50)
         self.icons_h = int(self.display_h / 900 * 25)
@@ -237,7 +235,7 @@ class FramelessWindow(QMainWindow, Ui_MainWindow):
         self.setWindowState(Qt.WindowNoState)
 
     def changeEvent(self, event: QtCore.QEvent) -> None:
-        if a0.type() == QtCore.QEvent.WindowStateChange:
+        if event.type() == QtCore.QEvent.WindowStateChange:
             if self.minimized and not self.isMinimized():
                 self.minimized = False
                 if self.restore_button.isVisible():
