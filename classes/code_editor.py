@@ -10,7 +10,7 @@ PAIR_SYMBOLS = {'(': ')', "'": "'", '"': '"', '{': '}', '[': ']'}
 
 
 class CodeEditor(QWidget):
-    def __init__(self, widget):
+    def __init__(self, widget: QWidget):
         super(CodeEditor, self).__init__(widget)
 
         self.field = QPlainTextEdit(self)
@@ -32,29 +32,26 @@ class CodeEditor(QWidget):
 
         self.kwargs = {}
 
-    def enable_help(self):
+    def enable_help(self) -> None:
         self.field.textChanged.connect(self.code_change)
 
-    def disable_help(self):
+    def disable_help(self) -> None:
         self.field.textChanged.connect(self.code_change_help_disabled)
 
-    def pass_f(self):
-        pass
-
-    def enable_highlighter(self):
+    def enable_highlighter(self) -> None:
         self.highlighter.enable()
         self.rehighlight()
 
-    def disable_highlighter(self):
+    def disable_highlighter(self) -> None:
         self.highlighter.disable()
         self.rehighlight()
 
-    def rehighlight(self):
+    def rehighlight(self) -> None:
         self.highlighter.rehighlight()
         self.field.setPlainText(self.field.toPlainText() + '.')
         self.field.setPlainText(self.field.toPlainText()[:-1])
 
-    def code_change(self):
+    def code_change(self) -> None:
         if self.changed:
             self.changed = False
             return
@@ -107,21 +104,21 @@ class CodeEditor(QWidget):
         self.field.setTextCursor(cursor)
         self.code = text
 
-    def code_change_help_disabled(self):
+    def code_change_help_disabled(self) -> None:
         if self.changed:
             self.changed = False
             return
         self.changed = True
         self.code = self.field.toPlainText()
 
-    def run_script(self):
+    def run_script(self) -> None:
         if not self.filename:
             return
         self.generate_bat()
         # TODO: Add custom run window
         Popen(['start', 'cmd', '/c', r'data\run.bat'], shell=True)
 
-    def generate_bat(self):
+    def generate_bat(self) -> None:
         with open('data/run.bat', 'w') as f:
             f.write('@echo off\n')
             f.write(f'echo {sys.executable} {self.filename}\n')
@@ -151,7 +148,7 @@ class CodeEditor(QWidget):
                 f.write(self.code.replace('\t', ' ' * 4))
         return save
 
-    def open_file(self, name=None):
+    def open_file(self, name='') -> None:
         reply = self.close_file()
         if not reply:
             return
@@ -172,7 +169,7 @@ class CodeEditor(QWidget):
         self.field.setPlainText(self.file.read().replace(' ' * 4, '\t'))
         self.field.setVisible(True)
 
-    def new_file(self):
+    def new_file(self) -> None:
         reply = self.close_file()
         if not reply:
             return
@@ -186,7 +183,7 @@ class CodeEditor(QWidget):
         open(filename, 'w').close()
         self.open_file(filename)
 
-    def close_file(self):
+    def close_file(self) -> bool:
         if not self.filename:
             return True
         if self.code == open(self.filename, 'r', encoding='utf-8') \

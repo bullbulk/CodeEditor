@@ -19,7 +19,7 @@ class MainWindow(FramelessWindow):
         with open('style.qss') as f:
             self.setStyleSheet(f.read())
 
-        self.code_widget = CodeEditor(self)
+        self.code_widget = CodeEditor(self)  # TODO: Replace with QScintilla
         self.code_widget.setObjectName('codeWidget')
         self.code_widget.move(8, self.window_icon.height())
         self.code_widget.kwargs = self.kwargs

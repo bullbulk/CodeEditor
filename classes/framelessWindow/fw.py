@@ -1,10 +1,10 @@
-from typing import Tuple
+from typing import Tuple, Union
 
 import screeninfo
 from PIL import Image
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import QSize, Qt
-from PyQt5.QtGui import QPixmap, QIcon, QMouseEvent, QImage, QFont, QKeySequence
+from PyQt5.QtGui import QPixmap, QIcon, QMouseEvent, QImage, QFont, QKeySequence, QResizeEvent
 from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QLabel, QPushButton, QMenu, QAction, QWidget
 
 from utils import utils
@@ -54,17 +54,12 @@ class Ui_MainWindow(object):
 
 
 class FramelessWindow(QMainWindow, Ui_MainWindow):
-    def __init__(self, parent, size: Tuple[int, int] = (1000, 500),
+    def __init__(self, parent: Union[QWidget, None], size: Tuple[int, int] = (1000, 500),
                  max_size: Tuple[int, int] = None,
                  min_size: Tuple[int, int] = None,
                  *, window_icon: str, close_icon: str,
                  maximize_icon: str, restore_icon: str, minimize_icon: str,
                  subwindow=False):
-        """
-        :param min_size: minimum window size (width, height)
-        :param window_icon: window icon filename
-        :param close_icon: window close button filename
-        """
         self.buttons_width = 0
 
         self.minimized = False
@@ -77,6 +72,7 @@ class FramelessWindow(QMainWindow, Ui_MainWindow):
 
         display = screeninfo.get_monitors()[0]
         self.display_w, self.display_h = display.width, display.height
+        # TODO: Add sizes for resolutions not only 16:9
         self.icons_w = int(self.display_w / 1600 * 50)
         self.icons_h = int(self.display_h / 900 * 25)
 
@@ -96,14 +92,8 @@ class FramelessWindow(QMainWindow, Ui_MainWindow):
         self.title_bar = QHBoxLayout(self)
         self.window_icon = QLabel(self)
         icon = Image.open(window_icon).resize([int(self.display_h / 900 * 16)] * 2)
-        icon_pxmap = QPixmap.fromImage(
-            QImage(
-                icon.tobytes(),
-                icon.size[0], icon.size[1],
-                QImage.Format_ARGB32
-            )
-        )
-        self.window_icon.setPixmap(icon_pxmap)
+        icon_pixmap = utils.get_pixmap(icon, *icon.size)
+        self.window_icon.setPixmap(icon_pixmap)
         self.window_icon.setStyleSheet(f'margin-left: 8px')
         self.window_icon.resize(self.icons_h, self.icons_h)
         self.title_bar.addWidget(self.window_icon)
@@ -129,7 +119,7 @@ class FramelessWindow(QMainWindow, Ui_MainWindow):
 
         self.before_resize = None
 
-    def setup_menu(self):
+    def setup_menu(self) -> None:
         file_menu = QMenu(self)
         self.file_menu_b = Button(self, file_menu, 'File')
         self.file_menu_b.move(self.window_icon.width() + 8 + self.buttons_width, 0)
@@ -167,7 +157,7 @@ class FramelessWindow(QMainWindow, Ui_MainWindow):
         run_menu.addAction(self.run_action)
         self.title_bar.addWidget(run_menu)
 
-    def resizeEvent(self, event):
+    def resizeEvent(self, event: QResizeEvent) -> None:
         self.in_resize = True
         self.close_button.move(self.size().width() - self.icons_w, 0)
         if not self.subwindow:
@@ -180,7 +170,7 @@ class FramelessWindow(QMainWindow, Ui_MainWindow):
         )
         super(FramelessWindow, self).resizeEvent(event)
 
-    def mousePressEvent(self, event: QMouseEvent):
+    def mousePressEvent(self, event: QMouseEvent) -> None:
         self.mouse_press_pos = None
         self.mouse_move_pos = None
         if self.mouse_on_title(event):
@@ -192,8 +182,7 @@ class FramelessWindow(QMainWindow, Ui_MainWindow):
 
         super().mousePressEvent(event)
 
-    #
-    def mouseMoveEvent(self, event: QMouseEvent):
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:
         if self.in_resize:
             super(FramelessWindow, self).mouseMoveEvent(event)
             self.in_resize = False
@@ -212,48 +201,49 @@ class FramelessWindow(QMainWindow, Ui_MainWindow):
 
         super().mouseMoveEvent(event)
 
-    def mouseReleaseEvent(self, event: QMouseEvent):
+    def mouseReleaseEvent(self, event: QMouseEvent) -> None:
         self.on_move = False
         super(FramelessWindow, self).mouseReleaseEvent(event)
 
-    def mouse_on_title(self, event):
+    def mouse_on_title(self, event) -> bool:
         x = event.pos().x()
         y = event.pos().y()
         if x in range(self.move_label.size().width() + self.window_icon.size().width() +
                       self.buttons_width + 1) and y in range(self.move_label.size().height() + 1):
             return True
+        return False
 
-    def mouseDoubleClickEvent(self, event):
+    def mouseDoubleClickEvent(self, event) -> None:
         if self.mouse_on_title(event):
             if self.windowState() == Qt.WindowMaximized:
                 self.restore()
             else:
                 self.maximize()
 
-    def maximize(self):
+    def maximize(self) -> None:
         self.maximize_button.setVisible(False)
         self.restore_button.setVisible(True)
         self.before_resize = self.geometry()
         self.setWindowState(Qt.WindowMaximized)
 
-    def minimize(self):
+    def minimize(self) -> None:
         self.minimized = True
         self.setWindowState(Qt.WindowMinimized)
 
-    def restore(self):
+    def restore(self) -> None:
         self.restore_button.setVisible(False)
         self.maximize_button.setVisible(True)
         self.before_resize = None
         self.setWindowState(Qt.WindowNoState)
 
-    def changeEvent(self, a0: QtCore.QEvent) -> None:
+    def changeEvent(self, event: QtCore.QEvent) -> None:
         if a0.type() == QtCore.QEvent.WindowStateChange:
             if self.minimized and not self.isMinimized():
                 self.minimized = False
                 if self.restore_button.isVisible():
                     self.maximize()
 
-    def check_icons(self):
+    def check_icons(self) -> dict:
         errors = {}
         try:
             open(self.close_icon, 'r')
@@ -274,7 +264,7 @@ class FramelessWindow(QMainWindow, Ui_MainWindow):
 
         return errors
 
-    def setup_title_buttons(self):
+    def setup_title_buttons(self) -> None:
         self.close_button = QPushButton(self)
         self.close_button.setFixedSize(QSize(self.icons_w, self.window_icon.size().height()))
         self.close_button.setStyleSheet('QPushButton { border-style: outset }'

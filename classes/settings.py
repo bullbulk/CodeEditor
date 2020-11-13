@@ -1,5 +1,5 @@
 import json
-from typing import Dict
+from typing import Dict, Union
 
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QVBoxLayout, QWidget, QCheckBox
@@ -16,7 +16,7 @@ class CheckBox(QCheckBox):
 
 
 class SettingsWindow(FramelessWindow):
-    def __init__(self, parent, settings, **kwargs):
+    def __init__(self, parent: Union[QWidget, None], settings: dict, **kwargs):
         super().__init__(parent, **kwargs, subwindow=True)
         self.parent = parent
         self.settings_json = settings
@@ -37,7 +37,7 @@ class SettingsWindow(FramelessWindow):
 
         self.add_settings()
 
-    def add_settings(self):
+    def add_settings(self) -> None:
         self.settings['highlighting'] = CheckBox(self.settings_w, 'Syntax highlighting',
                                                  self.highlighting)
         self.settings['input_help'] = CheckBox(self.settings_w,
@@ -46,21 +46,21 @@ class SettingsWindow(FramelessWindow):
         for i in self.settings.values():
             self.layout.addWidget(i)
 
-    def highlighting(self):
+    def highlighting(self) -> None:
         if self.settings['highlighting'].isChecked():
             self.parent.code_widget.enable_highlighter()
         else:
             self.parent.code_widget.disable_highlighter()
         self.save_settings()
 
-    def input_help(self):
+    def input_help(self) -> None:
         if self.settings['input_help'].isChecked():
             self.parent.code_widget.disable_help()
         else:
             self.parent.code_widget.enable_help()
         self.save_settings()
 
-    def save_settings(self):
+    def save_settings(self) -> None:
         self.settings_json['highlighting'] = self.settings['highlighting'].isChecked()
         self.settings_json['input_help'] = self.settings['input_help'].isChecked()
         json.dump(self.settings_json, open('data/settings.json', 'w'))

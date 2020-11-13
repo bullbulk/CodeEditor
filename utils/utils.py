@@ -1,14 +1,15 @@
 import json
 import os
 import sys
+from typing import Union
 
 from PIL import Image
 from PyQt5.QtGui import QImage, QPixmap
 
-
 REQUIRED_FILES = ['config.json', 'style.qss', 'settings.json']
 
-def setup_excepthook():
+
+def setup_excepthook() -> None:
     _excepthook = sys.excepthook
 
     def exception_hook(exctype, value, traceback):
@@ -41,14 +42,17 @@ def get_settings() -> dict:
     return c
 
 
-def clear_data():
+def clear_data() -> None:
     for i in os.listdir('data'):
         if i not in REQUIRED_FILES:
             os.remove('data/' + i)
 
 
-def get_pixmap(im, w, h) -> QPixmap:
-    icon = Image.open(im).resize((w, h))
+def get_pixmap(im: Union[str, Image.Image], w: int, h: int) -> QPixmap:
+    if type(im) is str:
+        icon = Image.open(im).resize((w, h))
+    else:
+        icon = im
     return QPixmap.fromImage(
         QImage(
             icon.tobytes(),
