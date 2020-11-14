@@ -114,6 +114,11 @@ class CodeEditor(QWidget):
     def run_script(self) -> None:
         if not self.filename:
             return
+        if self.code != open(self.filename, 'r', encoding='utf-8') \
+                .read().replace(' ' * 4, '\t'):
+            save = self.save()
+            if not save:
+                return
         self.generate_bat()
         # TODO: Add custom run window
         Popen(['start', 'cmd', '/c', r'data\run.bat'], shell=True)
@@ -121,9 +126,9 @@ class CodeEditor(QWidget):
     def generate_bat(self) -> None:
         with open('data/run.bat', 'w') as f:
             f.write('@echo off\n')
-            f.write(f'echo {sys.executable} {self.filename}\n')
+            f.write(f'echo "{sys.executable}" "{self.filename}"\n')
             f.write('echo.\n')
-            f.write(f'{sys.executable} {self.filename}\n')
+            f.write(f'"{sys.executable}" "{self.filename}"\n')
             f.write('echo.\n')
             f.write('pause\n')
             f.write('exit')

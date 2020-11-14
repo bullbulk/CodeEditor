@@ -144,7 +144,6 @@ class PythonHighlighter(QSyntaxHighlighter):
     def highlightBlock(self, text) -> None:
         """Apply syntax highlighting to the given block of text.
         """
-        print(text)
         if self.disabled or self.do_not_highlight:
             return
         # Do other syntax formatting
