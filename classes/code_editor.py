@@ -32,6 +32,8 @@ class CodeEditor(QWidget):
 
         self.kwargs = {}
 
+        self.launching = False
+
     def enable_help(self) -> None:
         self.field.textChanged.connect(self.code_change)
 
@@ -52,7 +54,7 @@ class CodeEditor(QWidget):
         self.field.setPlainText(self.field.toPlainText()[:-1])
 
     def code_change(self) -> None:
-        if self.changed:
+        if self.changed or self.launching:
             self.changed = False
             return
         text = list(self.field.toPlainText())
@@ -101,14 +103,12 @@ class CodeEditor(QWidget):
 
         cursor.setPosition(cur_pos)
 
+        self.highlighter.do_not_highlight = True
         self.field.setTextCursor(cursor)
+        self.highlighter.do_not_highlight = False
         self.code = text
 
     def code_change_help_disabled(self) -> None:
-        if self.changed:
-            self.changed = False
-            return
-        self.changed = True
         self.code = self.field.toPlainText()
 
     def run_script(self) -> None:

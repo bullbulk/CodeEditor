@@ -10,5 +10,5 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     utils.setup_excepthook()
     win = MainWindow(**settings.get_settings())
-    win.show()
-    sys.exit(app.exec_()) 
+    win.show() 
+    sys.exit(app.exec_())

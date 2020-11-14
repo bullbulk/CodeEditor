@@ -22,6 +22,7 @@ class MainWindow(FramelessWindow):
             self.setStyleSheet(f.read())
 
         self.code_widget = CodeEditor(self)  # TODO: Replace with QScintilla
+        self.code_widget.launching = True
         self.code_widget.setObjectName('codeWidget')
         self.code_widget.move(8, self.window_icon.height())
         self.code_widget.kwargs = self.kwargs
@@ -38,6 +39,8 @@ class MainWindow(FramelessWindow):
         self.settings = utils.get_settings()
         self.settings_w = SettingsWindow(self, self.settings, **self.kwargs)
         self.restore_settings()
+
+        self.code_widget.launching = False
 
     def show_settings(self):
         self.settings_w.show()
@@ -57,11 +60,11 @@ class MainWindow(FramelessWindow):
 
     def restore_settings(self):
         highlighting = self.settings.get('highlighting', True)
-        input_help = self.settings.get('help', True)
+        disable_input_help = self.settings.get('disable_input_help', False)
         if highlighting:
             self.settings_w.settings['highlighting'].click()
-        if input_help:
-            self.settings_w.settings['input_help'].click()
+        if disable_input_help:
+            self.settings_w.settings['disable_input_help'].click()
         self.settings_w.highlighting()
         self.settings_w.input_help()
 
@@ -100,6 +103,11 @@ class MainWindow(FramelessWindow):
                     if not self.code_widget.save():
                         return
                 self.code_widget.run_script()
+
+                self.code_widget.save(agreed=True)
+
+            if event.key() == Qt.Key_Z:
+                self.code_widget.field.redo()
 
         if event.modifiers() == Qt.ControlModifier:
             if event.key() == Qt.Key_O:

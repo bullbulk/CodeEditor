@@ -1,7 +1,7 @@
 # TAKEN FROM https://wiki.python.org/moin/PyQt/Python%20syntax%20highlighting AND MODIFIED
 
 import builtins
-
+import inspect
 from PyQt5.QtCore import QRegExp
 from PyQt5.QtGui import QColor, QTextCharFormat, QFont, QSyntaxHighlighter, QTextDocument
 
@@ -98,7 +98,7 @@ class PythonHighlighter(QSyntaxHighlighter):
                   for o in PythonHighlighter.operators]
         rules += [(r'%s' % b, 0, STYLES['brace'])
                   for b in PythonHighlighter.braces]
-        rules += [(r'\b%s\b' % f, 0, STYLES['builtin'])
+        rules += [(r'\b%s\b' % f, 0, STYLES['builtin'])  # FIXME: "exit" is highlighted in sys.exit()
                   for f in dir(builtins)]
         rules.append((r'__\w+__', 0, STYLES['special_function']))  # special functions like __init__
         rules += [(r'\b%s\b' % v, 0, STYLES['special_variables'])  # special variables like __name__
@@ -122,7 +122,6 @@ class PythonHighlighter(QSyntaxHighlighter):
             # From '#' until a newline
             (r'#[^\n]*', 0, STYLES['comment']),
 
-
             # Double-quoted string, possibly containing escape sequences
             (r'"[^"\\]*(\\.[^"\\]*)*"', 0, STYLES['string']),
             # Single-quoted string, possibly containing escape sequences
@@ -135,6 +134,7 @@ class PythonHighlighter(QSyntaxHighlighter):
                       for (pat, index, fmt) in rules]
 
         self.disabled = False
+        self.do_not_highlight = False
 
     def disable(self) -> None:
         self.disabled = True
@@ -145,7 +145,8 @@ class PythonHighlighter(QSyntaxHighlighter):
     def highlightBlock(self, text) -> None:
         """Apply syntax highlighting to the given block of text.
         """
-        if self.disabled:
+        print(text)
+        if self.disabled or self.do_not_highlight:
             return
         # Do other syntax formatting
         for expression, nth, format_ in self.rules:
