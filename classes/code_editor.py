@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import sys
 from subprocess import Popen
 
@@ -124,7 +126,7 @@ class CodeEditor(QWidget):
         Popen(['start', 'cmd', '/c', r'data\run.bat'], shell=True)
 
     def generate_bat(self) -> None:
-        with open('data/run.bat', 'w') as f:
+        with open('data/run.bat', 'w', encoding='utf-8') as f:
             f.write('@echo off\n')
             f.write(f'echo "{sys.executable}" "{self.filename}"\n')
             f.write('echo.\n')
